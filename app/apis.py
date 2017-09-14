@@ -18,14 +18,16 @@ def businesses():
             return jsonify(errors), 422
 
         name = json_data.get('name')
-        status_name = json_data.get('status')
-        status = Status.query.filter_by(name=status_name).first()
-        if status is None:
-            status, created = get_or_create(current_app.db, Status, name=status_name)
-            logging.info("status [%s] was created: [%s]" % (status.name, created))
-
+        try:
+            status_name = json_data["status"]["name"]
+        except KeyError:
+            status_name = 'pending'
         if name:
             try:
+                status = Status.query.filter_by(name=status_name).first()
+                if status is None:
+                    status, created = get_or_create(current_app.db, Status, name=status_name)
+                    logging.info("status [%s] was created: [%s]" % (status.name, created))
                 business = Business(name=name, status=status)
                 business.save()
                 obj = business_schema.dump(business)
