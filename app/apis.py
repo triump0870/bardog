@@ -61,7 +61,6 @@ def businesses():
         except KeyError:
             status_name = None
         business = Business.query.filter_by(name=name).first()
-        vendor = Vendor.query.filter_by(name=vendor_name).first()
 
         if business is None:
             message = {'name': 'Business object [%s] was not found' % repr(name)}
@@ -76,9 +75,13 @@ def businesses():
                         logging.info("status [%s] was created: [%s]" % (status.name, created))
                     business.status = status
                 if vendor_name:
+                    vendor = Vendor.query.filter_by(name=vendor_name).first()
                     if vendor is None:
                         message = {'vendor': 'Vendor object [%s] was not found' % repr(vendor_name)}
                         results.append(message)
+                        response = jsonify(results)
+                        response.status_code = 404
+                        return response
                     else:
                         current_app.db.session.add(vendor)
                         current_app.db.session.add(business)
