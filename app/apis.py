@@ -18,17 +18,24 @@ def businesses():
             return jsonify(errors), 422
 
         name = json_data.get('name')
-        status = json_data.get('status')
-        status = Status.query.filter_by(name=status).first()
+        status_name = json_data.get('status')
+        status = Status.query.filter_by(name=status_name).first()
         if status is None:
-            status, created = get_or_create(current_app.db, Status, name='pending')
-        print("name: [%s]" % name)
+            status, created = get_or_create(current_app.db, Status, name=status_name)
+            logging.info("status [%s] was created: [%s]" % (status.name, created))
+
         if name:
-            business = Business(name=name, status=status)
-            business.save()
-            obj = business_schema.dump(business)
-            response = jsonify(obj.data)
-            response.status_code = 201
+            try:
+                business = Business(name=name, status=status)
+                business.save()
+                obj = business_schema.dump(business)
+                response = jsonify(obj.data)
+                response.status_code = 201
+            except exc.IntegrityError as e:
+                current_app.db.session.rollback()
+                response = jsonify({'error': 'Business [%s] already exists' % name})
+                logger.error(repr(e))
+                response.status_code = 400
             return response
 
     elif request.method == "PATCH":
@@ -39,11 +46,18 @@ def businesses():
         data, errors = partner_schema.load(json_data)
         if errors:
             return jsonify(errors), 422
-
         results = []
         status_code = 404
         name = json_data.get('name')
-        vendor_name = json_data.get('vendor')
+        try:
+            vendor_name = json_data["vendor"]["name"]
+        except KeyError:
+            vendor_name = None
+
+        try:
+            status_name = json_data["status"]["name"]
+        except KeyError:
+            status_name = None
         business = Business.query.filter_by(name=name).first()
         vendor = Vendor.query.filter_by(name=vendor_name).first()
 
@@ -51,18 +65,26 @@ def businesses():
             message = {'name': 'Business object [%s] was not found' % repr(name)}
             results.append(message)
 
-        if vendor is None:
-            message = {'vendor': 'Vendor object [%s] was not found' % repr(vendor_name)}
-            results.append(message)
-
-        if business and vendor:
+        if business:
             try:
-                current_app.db.session.add(vendor)
-                current_app.db.session.add(business)
-                business.vendors.append(vendor)
+                if status_name:
+                    status = Status.query.filter_by(name=status_name).first()
+                    if status is None:
+                        status, created = get_or_create(current_app.db, Status, name=status_name)
+                        logging.info("status [%s] was created: [%s]" % (status.name, created))
+                    business.status = status
+                if vendor_name:
+                    if vendor is None:
+                        message = {'vendor': 'Vendor object [%s] was not found' % repr(vendor_name)}
+                        results.append(message)
+                    else:
+                        current_app.db.session.add(vendor)
+                        current_app.db.session.add(business)
+                        business.vendors.append(vendor)
                 current_app.db.session.commit()
                 obj = business_schema.dump(business)
                 results.append(obj.data)
+                status_code = 200
             except exc.IntegrityError as e:
                 current_app.db.session.rollback()
                 results.append({'error': 'Relation already exists'})
@@ -84,18 +106,34 @@ def businesses():
 
 def vendors():
     if request.method == "POST":
-        name = str(request.data.get('name'))
-        status = str(request.data.get('status'))
-        status = Status.query.filter_by(name=status).first()
+        json_data = request.get_json()
+        if not json_data:
+            return jsonify({'message': 'No input data provided'}), 400
+        # Validate and deserialize input
+        data, errors = vendor_schema.load(json_data)
+        if errors:
+            return jsonify(errors), 422
+
+        name = json_data.get('name')
+        status_name = json_data.get('status').get('name')
+        status = Status.query.filter_by(name=status_name).first()
+
         if status is None:
-            status, created = get_or_create(current_app.db, Status, name='pending')
+            status, created = get_or_create(current_app.db, Status, name=status_name)
+            logging.info("status [%s] was created: [%s]" % (status.name, created))
 
         if name:
-            vendor = Vendor(name=name, status=status)
-            vendor.save()
-            obj = vendor_schema.dump(vendor)
-            response = jsonify(obj.data)
-            response.status_code = 201
+            try:
+                vendor = Vendor(name=name, status=status)
+                vendor.save()
+                obj = vendor_schema.dump(vendor)
+                response = jsonify(obj.data)
+                response.status_code = 201
+            except exc.IntegrityError as e:
+                current_app.db.session.rollback()
+                response = jsonify({'error': 'Vendor [%s] already exists' % name})
+                logger.error(repr(e))
+                response.status_code = 400
             return response
     else:
         # GET
@@ -108,14 +146,28 @@ def vendors():
 
 def statuses():
     if request.method == "POST":
-        name = str(request.data.get('name'))
+        json_data = request.get_json()
+        if not json_data:
+            return jsonify({'message': 'No input data provided'}), 400
+        # Validate and deserialize input
+        data, errors = status_schema.load(json_data)
+        if errors:
+            return jsonify(errors), 422
+
+        name = json_data.get('name')
 
         if name:
-            status = Status(name=name)
-            status.save()
-            obj = status_schema.dump(status)
-            response = jsonify(obj.data)
-            response.status_code = 201
+            try:
+                status = Status(name=name)
+                status.save()
+                obj = status_schema.dump(status)
+                response = jsonify(obj.data)
+                response.status_code = 201
+            except exc.IntegrityError as e:
+                current_app.db.session.rollback()
+                response = jsonify({'error': 'Status [%s] already exists' % name})
+                logger.error(repr(e))
+                response.status_code = 400
             return response
     else:
         # GET
