@@ -2,7 +2,7 @@
 
 _**GET /businesses/**_
 
-**** Response Body:
+#### Response Body:
 
     [
         {
@@ -46,7 +46,7 @@ _**GET /businesses/**_
 
 _**POST /businesses/**_
 
-**** Request Body:
+#### Request Body:
 
     {
         "name": "xyz",              # required field
@@ -55,7 +55,7 @@ _**POST /businesses/**_
         }
     }
 
-**** Response Body:
+#### Response Body:
 
     {
         "_links": {
@@ -75,7 +75,7 @@ _**POST /businesses/**_
 
 _**PATCH /businesses/**_
 
-**** Request Body
+#### Request Body
 
     {
         "name": "bardog",               # required
@@ -87,7 +87,7 @@ _**PATCH /businesses/**_
         }
     }
 
-**** Response Body
+#### Response Body
 
     [
         {
@@ -114,17 +114,145 @@ _**PATCH /businesses/**_
         }
     ]
     
+__**GET /vendors/**_
+
+#### Response Body:
+
+    [
+        {
+            "_links": {
+                "collection": "/vendors/",
+                "self": "/vendors/?id=1"
+            },
+            "id": 1,
+            "name": "indigo",
+            "status": {
+                "name": "pending"
+            }
+        },
+        {
+            "_links": {
+                "collection": "/vendors/",
+                "self": "/vendors/?id=2"
+            },
+            "id": 2,
+            "name": "ravi",
+            "status": {
+                "name": "pending"
+            }
+        },
+        {
+            "_links": {
+                "collection": "/vendors/",
+                "self": "/vendors/?id=3"
+            },
+            "id": 3,
+            "name": "10 st.",
+            "status": {
+                "name": "pending"
+            }
+        }
+    ]
+    
     
 _**POST /vendors/**_
 
-{
-    "name": "xyz"           # required
-    "status": "active"      # optional
+#### Request Body:
+
+    {
+        "name": "10 downing st.",           # required
+        "status": {                         # optional field, will set to pending if not provided
+            "name":"active" 
+        }
+    }
+    
+#### Response Body:
+
+    {
+        "_links": {
+            "collection": "/vendors/",
+            "self": "/vendors/?id=23"
+        },
+        "id": 23,
+        "name": "Happy Brew",
+        "status": {
+            "name": "pending"
+        }
+    }
+    
+_**PATCH /vendors/**_
+  
+#### Request Body:
+
+    {
+        "name": "Toit",             # required
+        "status": {                 # required
+            "name":"inactive"
+        }
+    }
+    
+#### Response Body:
+    
+    {
+        "_links": {
+            "collection": "/vendors/",
+            "self": "/vendors/?id=24"
+        },
+        "id": 24,
+        "name": "Toit",
+        "status": {
+            "name": "inactive"
+        }
+    }
+    
+  
+_**GET /statuses/**_
+
+#### Response Body:
+
+    [
+        {
+            "_links": {
+                "collection": "/statuses/",
+                "self": "/statuses/?id=2"
+            },
+            "id": 2,
+            "name": "active"
+        },
+        {
+            "_links": {
+                "collection": "/statuses/",
+                "self": "/statuses/?id=4"
+            },
+            "id": 4,
+            "name": "inactive"
+        },
+        {
+            "_links": {
+                "collection": "/statuses/",
+                "self": "/statuses/?id=1"
+            },
+            "id": 1,
+            "name": "pending"
+        }
+    ]
+    
+    
+_**POST /statuses/**_
+
+#### Request Body:
+
+    {
+        "name": "active"           # required
+    }
+
+#### Response Body:
+
+    {
+    "_links": {
+        "collection": "/statuses/",
+        "self": "/statuses/?id=5"
+    },
+    "id": 5,
+    "name": "active"
 }
-
-POST /statuses/
-
-{
-    "name": "xyz"           # required
-}
-
