@@ -1,4 +1,4 @@
-from marshmallow import validates, ValidationError, fields, pre_load, pre_dump
+from marshmallow import validates, ValidationError, fields
 
 from app import ma
 
@@ -29,8 +29,6 @@ class VendorSchema(ma.Schema):
         if value is None or not value:
             raise ValidationError('Vendor name can\'t be blank')
 
-    # @pre_load
-    # def
     _links = ma.Hyperlinks({
         'self': ma.URLFor('vendor_route', id='<id>'),
         'collection': ma.URLFor('vendor_route')
@@ -43,8 +41,8 @@ class BusinessSchema(ma.Schema):
         fields = ('id', 'name', 'status', 'vendors', 'created_at', 'modified_at', '_links')
         ordered = True
 
-    status = ma.Nested(StatusSchema, only=('name',))
-    vendors = ma.Nested(VendorSchema, many=True, only=('id', 'name', 'status'))
+    status = fields.Nested(StatusSchema, only=('name',), required=False)
+    vendors = fields.Nested(VendorSchema, many=True, only=('id', 'name', 'status'), required=False)
 
     @validates('name')
     def validate_name(self, value):
