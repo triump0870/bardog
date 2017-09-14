@@ -10,8 +10,13 @@ logger = logging.getLogger(__name__)
 def businesses():
     if request.method == "POST":
         json_data = request.get_json()
+        print "json: ", json_data.keys()
         if not json_data:
             return jsonify({'message': 'No input data provided'}), 400
+        if len(json_data) < 1:
+            return jsonify({"message": "invalid input data"}), 400
+        if 'name' not in json_data.keys():
+            return jsonify({"message": "name not present in input data"}), 400
         # Validate and deserialize input
         data, errors = business_schema.load(json_data)
         if errors:
@@ -114,15 +119,21 @@ def vendors():
         json_data = request.get_json()
         if not json_data:
             return jsonify({'message': 'No input data provided'}), 400
+        if len(json_data) < 1:
+            return jsonify({"message": "invalid input data"}), 400
+        if 'name' not in json_data.keys():
+            return jsonify({"message": "name not present in input data"}), 400
         # Validate and deserialize input
         data, errors = vendor_schema.load(json_data)
         if errors:
             return jsonify(errors), 422
 
         name = json_data.get('name')
-        status_name = json_data.get('status').get('name')
+        try:
+            status_name = json_data["status"]["name"]
+        except KeyError:
+            status_name = 'pending'
         status = Status.query.filter_by(name=status_name).first()
-
         if status is None:
             status, created = get_or_create(current_app.db, Status, name=status_name)
             logging.info("status [%s] was created: [%s]" % (status.name, created))
@@ -145,6 +156,11 @@ def vendors():
         json_data = request.get_json()
         if not json_data:
             return jsonify({'message': 'No input data provided'}), 400
+        if len(json_data) < 2:
+            return jsonify({"message": "invalid input data"}), 400
+        if 'status' not in json_data:
+            return jsonify({"message": "status not present in input data"}), 400
+
         # Validate and deserialize input
         data, errors = vendor_schema.load(json_data)
         if errors:
@@ -186,6 +202,10 @@ def statuses():
         json_data = request.get_json()
         if not json_data:
             return jsonify({'message': 'No input data provided'}), 400
+        if len(json_data) < 1:
+            return jsonify({"message": "invalid input data"}), 400
+        if 'name' not in json_data.keys():
+            return jsonify({"message": "name not present in input data"}), 400
         # Validate and deserialize input
         data, errors = status_schema.load(json_data)
         if errors:
