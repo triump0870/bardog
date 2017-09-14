@@ -26,7 +26,7 @@ def business_route():
     return businesses()
 
 
-@app.route('/vendors/', methods=['POST', 'GET'])
+@app.route('/vendors/', methods=['POST', 'GET', 'PATCH'])
 def vendor_route():
     return vendors()
 

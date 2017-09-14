@@ -140,6 +140,38 @@ def vendors():
                 logger.error(repr(e))
                 response.status_code = 400
             return response
+
+    elif request.method == "PATCH":
+        json_data = request.get_json()
+        if not json_data:
+            return jsonify({'message': 'No input data provided'}), 400
+        # Validate and deserialize input
+        data, errors = vendor_schema.load(json_data)
+        if errors:
+            return jsonify(errors), 422
+
+        name = json_data.get('name')
+        status_name = json_data.get("status").get("name")
+
+        vendor = Vendor.query.filter_by(name=name).first()
+        if vendor is None:
+            message = {'name': 'Business object [%s] was not found' % repr(name)}
+            response = jsonify(message)
+            response.status_code = 404
+            return response
+
+        status = Status.query.filter_by(name=status_name).first()
+        if status is None:
+            message = {'name': 'Status object [%s] was not found' % repr(status_name)}
+            response = jsonify(message)
+            response.status_code = 404
+            return response
+        vendor.status = status
+        vendor.save()
+        response = vendor_schema.jsonify(vendor)
+        response.status_code = 200
+        return response
+
     else:
         # GET
         vendors = Vendor.get_all()
