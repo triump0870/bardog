@@ -1,4 +1,4 @@
-## Bardog Demo App
+## Bardog App
 
 _**GET /businesses/**_
 
